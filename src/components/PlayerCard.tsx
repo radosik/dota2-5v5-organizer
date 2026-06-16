@@ -89,34 +89,35 @@ export function PlayerCard({ player, onEdit }: Props) {
           )}
         </div>
 
-        <div className="mt-1 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-xs font-medium" style={{ color }}>
+        <div className="mt-1 flex min-w-0 items-center gap-2">
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium" style={{ color }}>
             <RankMedal tier={tier} size={24} />
             {formatRank(tier)}
           </span>
           {player.discordUsername && (
             <span
-              className="inline-flex items-center gap-1 text-[11px] text-faint"
+              className="inline-flex min-w-0 items-center gap-1 text-[11px] text-faint"
               title={player.discordUsername}
             >
-              <DiscordIcon className="h-3 w-3" />
-              <span className="max-w-[120px] truncate">{player.discordUsername}</span>
-            </span>
-          )}
-          {player.roles?.length > 0 && (
-            <span className="inline-flex items-center gap-0.5">
-              {player.roles.map((r) => (
-                <img
-                  key={r}
-                  src={`/roles/pos${r}.png`}
-                  alt={t.roles[r]}
-                  title={t.roles[r]}
-                  className="h-3.5 w-3.5 object-contain opacity-80"
-                />
-              ))}
+              <DiscordIcon className="h-3 w-3 shrink-0" />
+              <span className="truncate">{player.discordUsername}</span>
             </span>
           )}
         </div>
+
+        {player.roles?.length > 0 && (
+          <div className="mt-1 flex items-center gap-1">
+            {player.roles.map((r) => (
+              <img
+                key={r}
+                src={`/roles/pos${r}.png`}
+                alt={t.roles[r]}
+                title={t.roles[r]}
+                className="h-4 w-4 object-contain opacity-80"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* MMR (click to edit) */}
@@ -153,8 +154,11 @@ export function PlayerCard({ player, onEdit }: Props) {
         <span className="mt-0.5 text-[10px] uppercase tracking-wider text-faint">{t.card.mmr}</span>
       </div>
 
-      {/* hover actions */}
-      <div className="flex shrink-0 items-center gap-0.5 pl-1 opacity-0 transition group-hover:opacity-100">
+      {/* hover actions: absolute overlay so they don't reserve width (MMR stays flush right) */}
+      <div
+        {...noDrag}
+        className="absolute inset-y-0 right-0 z-10 flex items-center gap-0.5 rounded-r-xl bg-gradient-to-l from-surface-3 from-65% to-transparent pl-10 pr-2.5 opacity-0 transition group-hover:opacity-100"
+      >
         {player.accountId != null && (
           <button
             {...noDrag}
