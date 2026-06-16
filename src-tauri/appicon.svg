@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- frame + background (stacked solid fills; MSVG-safe) -->
+  <rect x="0" y="0" width="1024" height="1024" rx="220" fill="#26344a"/>
+  <rect x="16" y="16" width="992" height="992" rx="206" fill="#0c1119"/>
+
+  <!-- subtle team side panels -->
+  <rect x="150" y="150" width="270" height="724" rx="135" fill="#102017"/>
+  <rect x="604" y="150" width="270" height="724" rx="135" fill="#1f1014"/>
+
+  <!-- Radiant (green) team: 5 dots -->
+  <g fill="#46c47a">
+    <circle cx="285" cy="270" r="58"/>
+    <circle cx="285" cy="391" r="58"/>
+    <circle cx="285" cy="512" r="58"/>
+    <circle cx="285" cy="633" r="58"/>
+    <circle cx="285" cy="754" r="58"/>
+  </g>
+
+  <!-- Dire (red) team: 5 dots -->
+  <g fill="#e8584c">
+    <circle cx="739" cy="270" r="58"/>
+    <circle cx="739" cy="391" r="58"/>
+    <circle cx="739" cy="512" r="58"/>
+    <circle cx="739" cy="633" r="58"/>
+    <circle cx="739" cy="754" r="58"/>
+  </g>
+
+  <!-- gold divider + center hub -->
+  <rect x="500" y="188" width="24" height="648" rx="12" fill="#f4c150"/>
+  <circle cx="512" cy="512" r="46" fill="#f4c150"/>
+  <circle cx="512" cy="512" r="30" fill="#0c1119"/>
+</svg>
