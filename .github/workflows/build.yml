@@ -13,6 +13,10 @@ on:
       - "v*"
   workflow_dispatch:
 
+# Needed so the release step can create/update GitHub Releases.
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
