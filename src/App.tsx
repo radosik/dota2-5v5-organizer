@@ -77,7 +77,11 @@ function App() {
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
       <div className="flex h-full flex-col">
-        <header className="flex items-center justify-between border-b border-line bg-surface-1/60 px-5 py-3 backdrop-blur">
+        <header className="relative flex items-center justify-between border-b border-line bg-surface-1/60 px-5 py-3 backdrop-blur">
+          <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-medium tracking-wide text-muted">
+            by Rados1k
+          </span>
+
           <SendToDiscordButton />
 
           <button
