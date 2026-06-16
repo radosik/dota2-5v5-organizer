@@ -73,6 +73,15 @@ export interface Lobby {
   discordWebhook: string;
 }
 
+export interface ExportBundle {
+  version: number;
+  exportedAt: string;
+  appVersion: string;
+  players: Player[];
+  board: BoardState;
+  lobby: Lobby;
+}
+
 export type TeamId = "A" | "B";
 export const TEAM_SIZE = 5;
 

@@ -241,6 +241,62 @@ pub fn apply_dota_refresh(
     get_player(conn, id)?.ok_or(AppError::NotFound)
 }
 
+/// Replace ALL app data (players, board, lobby) with an imported snapshot,
+/// atomically. Player ids are preserved so board placements remain valid.
+pub fn import_data(
+    conn: &mut Connection,
+    players: &[Player],
+    board: &BoardState,
+    lobby: &Lobby,
+) -> AppResult<()> {
+    let tx = conn.transaction()?;
+    tx.execute("DELETE FROM players", [])?;
+    for p in players {
+        tx.execute(
+            "INSERT INTO players
+                (id, account_id, steam_id64, steam_name, avatar_url, rank_tier, rank_label, mmr,
+                 discord_username, discord_url, discord_id, notes, roles, last_fetched_at, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+            params![
+                p.id,
+                p.account_id,
+                p.steam_id64,
+                p.steam_name,
+                p.avatar_url,
+                p.rank_tier,
+                p.rank_label,
+                p.mmr,
+                p.discord_username,
+                p.discord_url,
+                p.discord_id,
+                p.notes,
+                serde_json::to_string(&p.roles)?,
+                p.last_fetched_at,
+                p.created_at,
+                p.updated_at,
+            ],
+        )?;
+    }
+    let a = serde_json::to_string(&board.team_a)?;
+    let b = serde_json::to_string(&board.team_b)?;
+    tx.execute(
+        "UPDATE board_state SET team_a = ?1, team_b = ?2, updated_at = ?3 WHERE id = 1",
+        params![a, b, now()],
+    )?;
+    tx.execute(
+        "UPDATE lobby SET region = ?1, room_name = ?2, room_password = ?3, discord_webhook = ?4, updated_at = ?5 WHERE id = 1",
+        params![
+            lobby.region,
+            lobby.room_name,
+            lobby.room_password,
+            lobby.discord_webhook,
+            now(),
+        ],
+    )?;
+    tx.commit()?;
+    Ok(())
+}
+
 // ----------------------------------------------------------------------------
 // Board state
 // ----------------------------------------------------------------------------
@@ -359,6 +415,50 @@ mod tests {
         let players = list_players(&conn).unwrap();
         assert_eq!(players[0].steam_name, "high");
         assert_eq!(players[1].steam_name, "low");
+    }
+
+    #[test]
+    fn import_replaces_all_data() {
+        let mut conn = mem();
+        create_player(&conn, &sample("Old", 1000)).unwrap(); // should be wiped
+
+        let imported = Player {
+            id: 42,
+            account_id: None,
+            steam_id64: None,
+            steam_name: "New".into(),
+            avatar_url: None,
+            rank_tier: None,
+            rank_label: None,
+            mmr: 7000,
+            discord_username: None,
+            discord_url: None,
+            discord_id: None,
+            notes: None,
+            roles: vec![2, 4],
+            last_fetched_at: None,
+            created_at: now(),
+            updated_at: now(),
+        };
+        let board = BoardState {
+            team_a: vec![Some(42), None, None, None, None],
+            team_b: vec![None; 5],
+        };
+        let lobby = Lobby {
+            region: "EU".into(),
+            room_name: "room".into(),
+            room_password: "pw".into(),
+            discord_webhook: "hook".into(),
+        };
+        import_data(&mut conn, &[imported], &board, &lobby).unwrap();
+
+        let all = list_players(&conn).unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, 42); // id preserved so board stays valid
+        assert_eq!(all[0].steam_name, "New");
+        assert_eq!(all[0].roles, vec![2, 4]);
+        assert_eq!(get_board(&conn).unwrap().team_a[0], Some(42));
+        assert_eq!(get_lobby(&conn).unwrap().region, "EU");
     }
 
     #[test]

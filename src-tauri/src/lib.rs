@@ -58,6 +58,8 @@ pub fn run() {
             commands::save_board,
             commands::get_lobby,
             commands::save_lobby,
+            commands::export_data,
+            commands::import_data,
             commands::send_to_discord,
             commands::resolve_steam_input,
             commands::estimate_mmr_from_rank,

@@ -108,3 +108,18 @@ pub struct Lobby {
     pub room_password: String,
     pub discord_webhook: String,
 }
+
+/// A portable snapshot of all app data, used for export/import (sharing setups).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportBundle {
+    #[serde(default)]
+    pub version: u32,
+    #[serde(default)]
+    pub exported_at: String,
+    #[serde(default)]
+    pub app_version: String,
+    pub players: Vec<Player>,
+    pub board: BoardState,
+    pub lobby: Lobby,
+}

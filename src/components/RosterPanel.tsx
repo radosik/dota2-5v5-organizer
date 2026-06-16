@@ -31,7 +31,7 @@ export function RosterPanel({ onEdit, placedIds }: Props) {
     <div
       ref={setNodeRef}
       className={cn(
-        "panel flex h-full flex-col rounded-2xl transition-colors",
+        "panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl transition-colors",
         isOver && "border-radiant/50",
       )}
     >
@@ -60,7 +60,7 @@ export function RosterPanel({ onEdit, placedIds }: Props) {
         </div>
       </div>
 
-      <div className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3">
         {loading && players.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-faint">
             <Spinner className="h-4 w-4 animate-spin" /> {t.roster.loading}

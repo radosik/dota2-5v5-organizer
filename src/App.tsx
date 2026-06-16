@@ -11,6 +11,7 @@ import {
 import { AddPlayerModal } from "./components/AddPlayerModal";
 import { Avatar } from "./components/Avatar";
 import { Board } from "./components/Board";
+import { DataTransferButtons } from "./components/DataTransferButtons";
 import { PlusIcon } from "./components/Icons";
 import { RosterPanel } from "./components/RosterPanel";
 import { SendToDiscordButton } from "./components/SendToDiscordButton";
@@ -84,18 +85,21 @@ function App() {
 
           <SendToDiscordButton />
 
-          <button
-            onClick={() => {
-              setEditing(null);
-              setModalOpen(true);
-            }}
-            className="btn-gold inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm"
-          >
-            <PlusIcon className="h-4 w-4" /> {t.app.addPlayer}
-          </button>
+          <div className="flex items-center gap-2">
+            <DataTransferButtons />
+            <button
+              onClick={() => {
+                setEditing(null);
+                setModalOpen(true);
+              }}
+              className="btn-gold inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm"
+            >
+              <PlusIcon className="h-4 w-4" /> {t.app.addPlayer}
+            </button>
+          </div>
         </header>
 
-        <main className="grid flex-1 grid-cols-[minmax(320px,1fr)_2.1fr] gap-4 overflow-hidden p-4">
+        <main className="grid min-h-0 flex-1 grid-cols-[360px_minmax(0,1fr)] gap-4 overflow-hidden p-4">
           <RosterPanel
             onEdit={(p) => {
               setEditing(p);

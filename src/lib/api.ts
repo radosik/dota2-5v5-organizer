@@ -4,6 +4,7 @@ import type {
   BoardState,
   DotaProfile,
   DotaSearchResult,
+  ExportBundle,
   Lobby,
   Player,
   PlayerInput,
@@ -29,6 +30,10 @@ export const api = {
   getLobby: () => invoke<Lobby>("get_lobby"),
   saveLobby: (region: string, roomName: string, roomPassword: string, discordWebhook: string) =>
     invoke<void>("save_lobby", { region, roomName, roomPassword, discordWebhook }),
+
+  // Data export / import
+  exportData: () => invoke<string>("export_data"),
+  importData: (bundle: ExportBundle) => invoke<void>("import_data", { bundle }),
 
   // Discord
   sendToDiscord: (content: string, userIds: string[], imageBase64: string) =>

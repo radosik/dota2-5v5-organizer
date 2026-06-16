@@ -5,7 +5,8 @@ use tauri::State;
 
 use crate::error::{AppError, AppResult};
 use crate::models::{
-    BoardState, DotaProfile, DotaSearchResult, Lobby, Player, PlayerInput, ResolvedSteamId,
+    BoardState, DotaProfile, DotaSearchResult, ExportBundle, Lobby, Player, PlayerInput,
+    ResolvedSteamId,
 };
 use crate::{db, opendota, AppState};
 
@@ -144,6 +145,48 @@ pub async fn send_to_discord(
         )));
     }
     Ok(())
+}
+
+// ----------------------------------------------------------------------------
+// Data export / import (share setups across users)
+// ----------------------------------------------------------------------------
+
+/// Serialize all app data to a JSON file in the user's Downloads folder.
+/// Returns the full path of the written file.
+#[tauri::command]
+pub fn export_data(app: tauri::AppHandle, state: State<'_, AppState>) -> AppResult<String> {
+    use tauri::Manager;
+
+    let bundle = {
+        let conn = lock(&state)?;
+        ExportBundle {
+            version: 1,
+            exported_at: chrono::Utc::now().to_rfc3339(),
+            app_version: env!("CARGO_PKG_VERSION").to_string(),
+            players: db::list_players(&conn)?,
+            board: db::get_board(&conn)?,
+            lobby: db::get_lobby(&conn)?,
+        }
+    };
+    let json = serde_json::to_string_pretty(&bundle)?;
+
+    let dir = app
+        .path()
+        .download_dir()
+        .or_else(|_| app.path().app_data_dir())
+        .map_err(|e| AppError::Other(format!("Не удалось найти папку для сохранения: {e}")))?;
+    let stamp = chrono::Utc::now().format("%Y%m%d-%H%M%S");
+    let path = dir.join(format!("dota5v5-data-{stamp}.json"));
+    std::fs::write(&path, json)
+        .map_err(|e| AppError::Other(format!("Не удалось сохранить файл: {e}")))?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// Replace ALL current data with a previously-exported snapshot.
+#[tauri::command]
+pub fn import_data(state: State<'_, AppState>, bundle: ExportBundle) -> AppResult<()> {
+    let mut conn = lock(&state)?;
+    db::import_data(&mut conn, &bundle.players, &bundle.board, &bundle.lobby)
 }
 
 // ----------------------------------------------------------------------------

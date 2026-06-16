@@ -10,6 +10,24 @@ export const t = {
     mmr: "ММР",
   },
 
+  data: {
+    export: "Экспорт",
+    import: "Импорт",
+    exporting: "Экспорт…",
+    importing: "Импорт…",
+    exportTitle: "Сохранить все данные в файл",
+    importTitle: "Импорт данных",
+    exportedToast: (path: string) => `Файл сохранён: ${path}`,
+    exportFailed: "Не удалось экспортировать данные.",
+    importPrompt: "Импортировать этот файл?",
+    importWarning: "Все текущие игроки, расстановка и настройки будут заменены.",
+    importPlayers: (n: number) => `Игроков в файле: ${n}`,
+    importBadFile: "Неверный файл данных. Выберите файл, созданный кнопкой «Экспорт».",
+    importFailed: "Не удалось импортировать данные.",
+    confirm: "Импортировать",
+    cancel: "Отмена",
+  },
+
   roster: {
     title: "Игроки",
     onBoard: (n: number) => `${n} в командах`,
