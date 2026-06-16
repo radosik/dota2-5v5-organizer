@@ -25,7 +25,7 @@ export function RolePicker({ value, onChange }: Props) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       {ROLES.map((role) => {
         const on = selected.has(role);
         return (
@@ -37,7 +37,7 @@ export function RolePicker({ value, onChange }: Props) {
             aria-pressed={on}
             aria-label={t.roles[role]}
             className={cn(
-              "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border transition",
+              "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition",
               on
                 ? "border-gold/70 bg-gold/15 shadow-[0_0_0_1px_rgba(0,0,0,0.2)]"
                 : "border-line bg-surface-2 hover:border-line-2 hover:bg-surface-3"
@@ -47,13 +47,13 @@ export function RolePicker({ value, onChange }: Props) {
               src={`/roles/pos${role}.png`}
               alt={t.roles[role]}
               className={cn(
-                "h-7 w-7 object-contain transition",
+                "h-5 w-5 object-contain transition",
                 on ? "opacity-100" : "opacity-45 grayscale"
               )}
             />
             <span
               className={cn(
-                "num absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold leading-none",
+                "num absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold leading-none",
                 on ? "bg-gold text-black" : "bg-surface-3 text-faint"
               )}
             >
@@ -67,7 +67,7 @@ export function RolePicker({ value, onChange }: Props) {
         type="button"
         onClick={toggleAll}
         className={cn(
-          "ml-1 h-12 shrink-0 rounded-lg border px-3 text-xs font-semibold transition",
+          "ml-0.5 h-9 shrink-0 rounded-lg border px-2.5 text-xs font-semibold transition",
           allOn
             ? "border-gold/70 bg-gold/15 text-gold-bright"
             : "border-line bg-surface-2 text-faint hover:border-line-2 hover:text-text"

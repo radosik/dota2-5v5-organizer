@@ -212,7 +212,7 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
       title={editing ? t.modal.titleEdit : t.modal.titleAdd}
       widthClass="max-w-lg"
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Fill-from-Dota search row */}
         <div>
           <label className={labelCls}>{t.modal.searchLabel}</label>
@@ -313,9 +313,13 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
         </div>
 
         <div>
-          <label className={labelCls}>{t.modal.roles}</label>
+          <label className={cn(labelCls, "flex items-center gap-2")}>
+            {t.modal.roles}
+            <span className="font-normal normal-case tracking-normal text-faint">
+              {t.modal.rolesHint}
+            </span>
+          </label>
           <RolePicker value={form.roles} onChange={(roles) => set("roles", roles)} />
-          <p className="mt-1.5 text-[11px] text-faint">{t.modal.rolesHint}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
