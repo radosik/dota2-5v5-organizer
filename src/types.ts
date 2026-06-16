@@ -14,6 +14,7 @@ export interface Player {
   discordUrl: string | null;
   discordId: string | null;
   notes: string | null;
+  roles: number[];
   lastFetchedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +32,7 @@ export interface PlayerInput {
   discordUrl: string | null;
   discordId: string | null;
   notes: string | null;
+  roles: number[];
 }
 
 export interface DotaSearchResult {

@@ -20,6 +20,7 @@ export function playerToInput(p: Player): PlayerInput {
     discordUrl: p.discordUrl,
     discordId: p.discordId,
     notes: p.notes,
+    roles: p.roles ?? [],
   };
 }
 

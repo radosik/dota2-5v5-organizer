@@ -19,6 +19,9 @@ pub struct Player {
     pub discord_url: Option<String>,
     pub discord_id: Option<String>,
     pub notes: Option<String>,
+    /// Preferred positions 1..=5 (Carry, Mid, Offlane, Soft/Hard Support).
+    #[serde(default)]
+    pub roles: Vec<i64>,
     pub last_fetched_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
@@ -39,6 +42,8 @@ pub struct PlayerInput {
     pub discord_url: Option<String>,
     pub discord_id: Option<String>,
     pub notes: Option<String>,
+    #[serde(default)]
+    pub roles: Vec<i64>,
 }
 
 /// One candidate returned by OpenDota's `/search` endpoint.

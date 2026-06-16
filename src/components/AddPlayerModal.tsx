@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { formatRank, rankColor, tierFromMmr } from "../lib/rank";
 import { cn } from "../lib/util";
@@ -9,6 +9,10 @@ import { Avatar } from "./Avatar";
 import { SearchIcon, Spinner } from "./Icons";
 import { Modal } from "./Modal";
 import { RankMedal } from "./RankMedal";
+import { RolePicker } from "./RolePicker";
+
+/** Max size for a manually-uploaded avatar (stored inline as a data URL). */
+const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
 
 type Props = {
   open: boolean;
@@ -25,6 +29,7 @@ type FormState = {
   discordUsername: string;
   discordId: string;
   notes: string;
+  roles: number[];
   isPrivate: boolean;
 };
 
@@ -37,6 +42,7 @@ const emptyForm: FormState = {
   discordUsername: "",
   discordId: "",
   notes: "",
+  roles: [],
   isPrivate: false,
 };
 
@@ -60,6 +66,7 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +84,7 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
         discordUsername: editing.discordUsername ?? "",
         discordId: editing.discordId ?? "",
         notes: editing.notes ?? "",
+        roles: editing.roles ?? [],
         isPrivate: false,
       });
     } else {
@@ -86,6 +94,20 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  function onAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+    if (file.size > MAX_AVATAR_BYTES) {
+      setSaveError(t.modal.avatarTooLarge);
+      return;
+    }
+    setSaveError(null);
+    const reader = new FileReader();
+    reader.onload = () => set("avatarUrl", reader.result as string);
+    reader.readAsDataURL(file);
+  }
 
   async function runSearch() {
     const q = query.trim();
@@ -165,6 +187,7 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
       discordUrl: null,
       discordId: form.discordId.trim() || null,
       notes: form.notes.trim() || null,
+      roles: form.roles,
     };
 
     setSaving(true);
@@ -245,7 +268,21 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
         )}
 
         <div className="flex items-center gap-3">
-          <Avatar name={form.steamName || "?"} avatarUrl={form.avatarUrl} rankTier={tier} size={56} />
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            title={t.modal.avatarUpload}
+            className="shrink-0 rounded-full ring-offset-2 ring-offset-surface-1 transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          >
+            <Avatar name={form.steamName || "?"} avatarUrl={form.avatarUrl} rankTier={tier} size={56} />
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            onChange={onAvatarFile}
+            className="hidden"
+          />
           <div className="flex-1">
             <label className={labelCls}>{t.modal.steamName}</label>
             <input
@@ -254,7 +291,31 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
               placeholder={t.modal.steamNamePlaceholder}
               className={fieldCls}
             />
+            <div className="mt-1.5 flex items-center gap-3 text-[11px]">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="font-semibold text-gold-bright hover:underline"
+              >
+                {t.modal.avatarUpload}
+              </button>
+              {form.avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => set("avatarUrl", null)}
+                  className="text-faint hover:text-dire"
+                >
+                  {t.modal.avatarRemove}
+                </button>
+              )}
+            </div>
           </div>
+        </div>
+
+        <div>
+          <label className={labelCls}>{t.modal.roles}</label>
+          <RolePicker value={form.roles} onChange={(roles) => set("roles", roles)} />
+          <p className="mt-1.5 text-[11px] text-faint">{t.modal.rolesHint}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

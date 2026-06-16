@@ -103,6 +103,19 @@ export function PlayerCard({ player, onEdit }: Props) {
               <span className="max-w-[120px] truncate">{player.discordUsername}</span>
             </span>
           )}
+          {player.roles?.length > 0 && (
+            <span className="inline-flex items-center gap-0.5">
+              {player.roles.map((r) => (
+                <img
+                  key={r}
+                  src={`/roles/pos${r}.png`}
+                  alt={t.roles[r]}
+                  title={t.roles[r]}
+                  className="h-3.5 w-3.5 object-contain opacity-80"
+                />
+              ))}
+            </span>
+          )}
         </div>
       </div>
 

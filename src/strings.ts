@@ -62,7 +62,23 @@ export const t = {
     saving: "Сохранение…",
     errNameRequired: "Укажите имя в Steam.",
     errMmr: "Введите корректное число ММР.",
+    roles: "Позиции",
+    rolesHint: "Можно выбрать несколько.",
+    rolesAll: "Все",
+    avatar: "Аватар",
+    avatarUpload: "Загрузить фото",
+    avatarRemove: "Убрать фото",
+    avatarHint: "PNG или JPG с вашего компьютера.",
+    avatarTooLarge: "Файл слишком большой (макс. 3 МБ).",
   },
+
+  roles: {
+    1: "Позиция 1 (Carry)",
+    2: "Позиция 2 (Mid)",
+    3: "Позиция 3 (Offlane)",
+    4: "Позиция 4 (Soft Support)",
+    5: "Позиция 5 (Hard Support)",
+  } as Record<number, string>,
 
   board: {
     title: "Расстановка",

@@ -7,7 +7,7 @@ use crate::error::{AppError, AppResult};
 use crate::models::{BoardState, Lobby, Player, PlayerInput};
 
 const PLAYER_COLS: &str = "id, account_id, steam_id64, steam_name, avatar_url, rank_tier, \
-     rank_label, mmr, discord_username, discord_url, discord_id, notes, last_fetched_at, created_at, updated_at";
+     rank_label, mmr, discord_username, discord_url, discord_id, notes, last_fetched_at, created_at, updated_at, roles";
 
 /// Open the database at `path` and run migrations.
 pub fn open(path: &Path) -> AppResult<Connection> {
@@ -36,7 +36,8 @@ fn migrate(conn: &Connection) -> AppResult<()> {
             notes            TEXT,
             last_fetched_at  TEXT,
             created_at       TEXT NOT NULL,
-            updated_at       TEXT NOT NULL
+            updated_at       TEXT NOT NULL,
+            roles            TEXT
         );
 
         CREATE TABLE IF NOT EXISTS board_state (
@@ -59,6 +60,7 @@ fn migrate(conn: &Connection) -> AppResult<()> {
 
     // Add columns to databases created by earlier versions (ignored if present).
     let _ = conn.execute("ALTER TABLE players ADD COLUMN discord_id TEXT", []);
+    let _ = conn.execute("ALTER TABLE players ADD COLUMN roles TEXT", []);
     let _ = conn.execute(
         "ALTER TABLE lobby ADD COLUMN discord_webhook TEXT NOT NULL DEFAULT ''",
         [],
@@ -100,6 +102,10 @@ fn row_to_player(row: &Row) -> rusqlite::Result<Player> {
         last_fetched_at: row.get(12)?,
         created_at: row.get(13)?,
         updated_at: row.get(14)?,
+        roles: row
+            .get::<_, Option<String>>(15)?
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default(),
     })
 }
 
@@ -135,8 +141,8 @@ pub fn create_player(conn: &Connection, input: &PlayerInput) -> AppResult<Player
     conn.execute(
         "INSERT INTO players
             (account_id, steam_id64, steam_name, avatar_url, rank_tier, rank_label, mmr,
-             discord_username, discord_url, discord_id, notes, last_fetched_at, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+             discord_username, discord_url, discord_id, notes, roles, last_fetched_at, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
         params![
             input.account_id,
             input.steam_id64,
@@ -149,6 +155,7 @@ pub fn create_player(conn: &Connection, input: &PlayerInput) -> AppResult<Player
             input.discord_url,
             input.discord_id,
             input.notes,
+            serde_json::to_string(&input.roles)?,
             // last_fetched_at: stamp it if this player carries Dota data
             input.rank_tier.map(|_| ts.clone()),
             ts,
@@ -164,8 +171,8 @@ pub fn update_player(conn: &Connection, id: i64, input: &PlayerInput) -> AppResu
         "UPDATE players SET
             account_id = ?1, steam_id64 = ?2, steam_name = ?3, avatar_url = ?4,
             rank_tier = ?5, rank_label = ?6, mmr = ?7, discord_username = ?8,
-            discord_url = ?9, discord_id = ?10, notes = ?11, updated_at = ?12
-         WHERE id = ?13",
+            discord_url = ?9, discord_id = ?10, notes = ?11, roles = ?12, updated_at = ?13
+         WHERE id = ?14",
         params![
             input.account_id,
             input.steam_id64,
@@ -178,6 +185,7 @@ pub fn update_player(conn: &Connection, id: i64, input: &PlayerInput) -> AppResu
             input.discord_url,
             input.discord_id,
             input.notes,
+            serde_json::to_string(&input.roles)?,
             now(),
             id,
         ],
@@ -316,6 +324,7 @@ mod tests {
             discord_url: None,
             discord_id: None,
             notes: None,
+            roles: vec![1, 3],
         }
     }
 
@@ -326,6 +335,7 @@ mod tests {
 
         let created = create_player(&conn, &sample("Pudge", 5000)).unwrap();
         assert_eq!(created.steam_name, "Pudge");
+        assert_eq!(created.roles, vec![1, 3]); // roles persist as JSON
         assert!(created.last_fetched_at.is_some()); // stamped because rank_tier present
 
         let all = list_players(&conn).unwrap();
