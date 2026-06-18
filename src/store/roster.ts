@@ -14,6 +14,7 @@ interface RosterStore {
   remove: (id: number) => Promise<void>;
   refresh: (id: number) => Promise<Player>;
   setMmr: (id: number, mmr: number) => Promise<void>;
+  setActive: (id: number, active: boolean) => Promise<void>;
 }
 
 export const useRoster = create<RosterStore>((set, get) => ({
@@ -60,5 +61,17 @@ export const useRoster = create<RosterStore>((set, get) => ({
     if (!player) return;
     await api.updatePlayer(id, { ...playerToInput(player), mmr });
     await get().load();
+  },
+
+  setActive: async (id, active) => {
+    // Optimistic: flip locally so the Active list updates instantly.
+    set({ players: get().players.map((p) => (p.id === id ? { ...p, isActive: active } : p)) });
+    try {
+      await api.setPlayerActive(id, active);
+    } catch {
+      await get().load(); // revert on failure
+    }
+    // If a player goes offline, pull them off the board too.
+    if (!active) useBoard.getState().remove(id);
   },
 }));

@@ -20,6 +20,8 @@ export const api = {
   updatePlayer: (id: number, input: PlayerInput) =>
     invoke<Player>("update_player", { id, input }),
   deletePlayer: (id: number) => invoke<void>("delete_player", { id }),
+  setPlayerActive: (id: number, active: boolean) =>
+    invoke<Player>("set_player_active", { id, active }),
 
   // Board
   getBoard: () => invoke<BoardState>("get_board"),

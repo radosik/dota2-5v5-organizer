@@ -15,6 +15,7 @@ export interface Player {
   discordId: string | null;
   notes: string | null;
   roles: number[];
+  isActive: boolean;
   lastFetchedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +34,7 @@ export interface PlayerInput {
   discordId: string | null;
   notes: string | null;
   roles: number[];
+  isActive: boolean;
 }
 
 export interface DotaSearchResult {

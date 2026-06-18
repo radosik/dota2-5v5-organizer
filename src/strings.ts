@@ -29,13 +29,25 @@ export const t = {
   },
 
   roster: {
-    title: "Игроки",
+    title: "Активные игроки",
     onBoard: (n: number) => `${n} в командах`,
     filter: "Поиск игрока…",
     loading: "Загрузка…",
     emptyFiltered: "Ничего не найдено.",
-    emptyAllPlaced: "Все игроки в командах. Перетащите карточку сюда, чтобы вернуть в запас.",
+    emptyAllPlaced: "Все активные игроки в командах. Перетащите карточку сюда, чтобы вернуть в запас.",
     emptyNone: "Пока нет игроков. Нажмите «Добавить игрока», чтобы собрать состав.",
+    emptyNoActive: "Нет активных игроков. Откройте «Все игроки» и отметите, кто онлайн.",
+    allPlayers: "Все игроки",
+  },
+
+  allPlayers: {
+    title: "Все игроки",
+    subtitle: "Отметьте, кто онлайн, измените данные или удалите игрока из системы.",
+    filter: "Поиск игрока…",
+    count: (n: number) => `${n} всего`,
+    active: (n: number) => `${n} онлайн`,
+    empty: "Ничего не найдено.",
+    emptyNone: "Пока нет игроков.",
   },
 
   card: {
@@ -48,6 +60,9 @@ export const t = {
     confirmDelete: "Удалить игрока?",
     cancel: "Отмена",
     noDiscord: "Ссылка на Discord не указана",
+    removeFromActive: "Убрать из активных (не удаляет из системы)",
+    markOnline: "Отметить онлайн",
+    markOffline: "Отметить офлайн",
   },
 
   modal: {
@@ -162,6 +177,12 @@ export const t = {
     sent: "Отправлено в Discord",
     failed: "Не удалось отправить",
     noWebhook: "Сначала укажите webhook (шестерёнка справа).",
+    confirmTitle: "Отправить в Discord",
+    confirmPingIntro: (n: number) => `Будут упомянуты (@) ${n} игрок(ов) из команд:`,
+    confirmNoPing: "Ни у кого из расставленных игроков нет Discord ID — никто не будет упомянут.",
+    confirmDupWarning: "Один Discord ID указан у нескольких игроков — это один и тот же человек.",
+    confirmSend: "Отправить",
+    cancel: "Отмена",
   },
 } as const;
 

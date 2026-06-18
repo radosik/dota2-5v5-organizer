@@ -7,7 +7,7 @@ use crate::error::{AppError, AppResult};
 use crate::models::{BoardState, Lobby, Player, PlayerInput};
 
 const PLAYER_COLS: &str = "id, account_id, steam_id64, steam_name, avatar_url, rank_tier, \
-     rank_label, mmr, discord_username, discord_url, discord_id, notes, last_fetched_at, created_at, updated_at, roles";
+     rank_label, mmr, discord_username, discord_url, discord_id, notes, last_fetched_at, created_at, updated_at, roles, is_active";
 
 /// Open the database at `path` and run migrations.
 pub fn open(path: &Path) -> AppResult<Connection> {
@@ -37,7 +37,8 @@ fn migrate(conn: &Connection) -> AppResult<()> {
             last_fetched_at  TEXT,
             created_at       TEXT NOT NULL,
             updated_at       TEXT NOT NULL,
-            roles            TEXT
+            roles            TEXT,
+            is_active        INTEGER NOT NULL DEFAULT 1
         );
 
         CREATE TABLE IF NOT EXISTS board_state (
@@ -61,6 +62,10 @@ fn migrate(conn: &Connection) -> AppResult<()> {
     // Add columns to databases created by earlier versions (ignored if present).
     let _ = conn.execute("ALTER TABLE players ADD COLUMN discord_id TEXT", []);
     let _ = conn.execute("ALTER TABLE players ADD COLUMN roles TEXT", []);
+    let _ = conn.execute(
+        "ALTER TABLE players ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1",
+        [],
+    );
     let _ = conn.execute(
         "ALTER TABLE lobby ADD COLUMN discord_webhook TEXT NOT NULL DEFAULT ''",
         [],
@@ -106,6 +111,7 @@ fn row_to_player(row: &Row) -> rusqlite::Result<Player> {
             .get::<_, Option<String>>(15)?
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_default(),
+        is_active: row.get::<_, i64>(16)? != 0,
     })
 }
 
@@ -141,8 +147,8 @@ pub fn create_player(conn: &Connection, input: &PlayerInput) -> AppResult<Player
     conn.execute(
         "INSERT INTO players
             (account_id, steam_id64, steam_name, avatar_url, rank_tier, rank_label, mmr,
-             discord_username, discord_url, discord_id, notes, roles, last_fetched_at, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+             discord_username, discord_url, discord_id, notes, roles, is_active, last_fetched_at, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
         params![
             input.account_id,
             input.steam_id64,
@@ -156,6 +162,7 @@ pub fn create_player(conn: &Connection, input: &PlayerInput) -> AppResult<Player
             input.discord_id,
             input.notes,
             serde_json::to_string(&input.roles)?,
+            input.is_active,
             // last_fetched_at: stamp it if this player carries Dota data
             input.rank_tier.map(|_| ts.clone()),
             ts,
@@ -171,8 +178,8 @@ pub fn update_player(conn: &Connection, id: i64, input: &PlayerInput) -> AppResu
         "UPDATE players SET
             account_id = ?1, steam_id64 = ?2, steam_name = ?3, avatar_url = ?4,
             rank_tier = ?5, rank_label = ?6, mmr = ?7, discord_username = ?8,
-            discord_url = ?9, discord_id = ?10, notes = ?11, roles = ?12, updated_at = ?13
-         WHERE id = ?14",
+            discord_url = ?9, discord_id = ?10, notes = ?11, roles = ?12, is_active = ?13, updated_at = ?14
+         WHERE id = ?15",
         params![
             input.account_id,
             input.steam_id64,
@@ -186,6 +193,7 @@ pub fn update_player(conn: &Connection, id: i64, input: &PlayerInput) -> AppResu
             input.discord_id,
             input.notes,
             serde_json::to_string(&input.roles)?,
+            input.is_active,
             now(),
             id,
         ],
@@ -199,6 +207,18 @@ pub fn update_player(conn: &Connection, id: i64, input: &PlayerInput) -> AppResu
 pub fn delete_player(conn: &Connection, id: i64) -> AppResult<()> {
     conn.execute("DELETE FROM players WHERE id = ?1", params![id])?;
     Ok(())
+}
+
+/// Toggle a player's "online/active" flag without touching other fields.
+pub fn set_player_active(conn: &Connection, id: i64, active: bool) -> AppResult<Player> {
+    let affected = conn.execute(
+        "UPDATE players SET is_active = ?1, updated_at = ?2 WHERE id = ?3",
+        params![active, now(), id],
+    )?;
+    if affected == 0 {
+        return Err(AppError::NotFound);
+    }
+    get_player(conn, id)?.ok_or(AppError::NotFound)
 }
 
 /// Apply fresh Dota data to an existing player (used by refresh).
@@ -255,8 +275,8 @@ pub fn import_data(
         tx.execute(
             "INSERT INTO players
                 (id, account_id, steam_id64, steam_name, avatar_url, rank_tier, rank_label, mmr,
-                 discord_username, discord_url, discord_id, notes, roles, last_fetched_at, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
+                 discord_username, discord_url, discord_id, notes, roles, is_active, last_fetched_at, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
             params![
                 p.id,
                 p.account_id,
@@ -271,6 +291,7 @@ pub fn import_data(
                 p.discord_id,
                 p.notes,
                 serde_json::to_string(&p.roles)?,
+                p.is_active,
                 p.last_fetched_at,
                 p.created_at,
                 p.updated_at,
@@ -381,6 +402,7 @@ mod tests {
             discord_id: None,
             notes: None,
             roles: vec![1, 3],
+            is_active: true,
         }
     }
 
@@ -405,6 +427,20 @@ mod tests {
 
         delete_player(&conn, created.id).unwrap();
         assert_eq!(list_players(&conn).unwrap().len(), 0);
+    }
+
+    #[test]
+    fn set_active_toggles_flag() {
+        let conn = mem();
+        let p = create_player(&conn, &sample("Pudge", 5000)).unwrap();
+        assert!(p.is_active); // active by default
+
+        let off = set_player_active(&conn, p.id, false).unwrap();
+        assert!(!off.is_active);
+        assert!(!get_player(&conn, p.id).unwrap().unwrap().is_active);
+
+        let on = set_player_active(&conn, p.id, true).unwrap();
+        assert!(on.is_active);
     }
 
     #[test]
@@ -436,6 +472,7 @@ mod tests {
             discord_id: None,
             notes: None,
             roles: vec![2, 4],
+            is_active: true,
             last_fetched_at: None,
             created_at: now(),
             updated_at: now(),

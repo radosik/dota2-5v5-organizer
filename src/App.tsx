@@ -9,10 +9,12 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { AddPlayerModal } from "./components/AddPlayerModal";
+import { AllPlayersModal } from "./components/AllPlayersModal";
 import { Avatar } from "./components/Avatar";
 import { Board } from "./components/Board";
 import { DataTransferButtons } from "./components/DataTransferButtons";
 import { PlusIcon } from "./components/Icons";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { RosterPanel } from "./components/RosterPanel";
 import { SendToDiscordButton } from "./components/SendToDiscordButton";
 import { tierFromMmr } from "./lib/rank";
@@ -32,6 +34,7 @@ function App() {
   const removeFromBoard = useBoard((s) => s.remove);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [allPlayersOpen, setAllPlayersOpen] = useState(false);
   const [editing, setEditing] = useState<Player | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
 
@@ -86,6 +89,7 @@ function App() {
           <SendToDiscordButton />
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <DataTransferButtons />
             <button
               onClick={() => {
@@ -105,6 +109,7 @@ function App() {
               setEditing(p);
               setModalOpen(true);
             }}
+            onOpenAllPlayers={() => setAllPlayersOpen(true)}
             placedIds={placedIds}
           />
           <Board />
@@ -129,6 +134,15 @@ function App() {
           </div>
         ) : null}
       </DragOverlay>
+
+      <AllPlayersModal
+        open={allPlayersOpen}
+        onClose={() => setAllPlayersOpen(false)}
+        onEdit={(p) => {
+          setEditing(p);
+          setModalOpen(true);
+        }}
+      />
 
       <AddPlayerModal open={modalOpen} onClose={() => setModalOpen(false)} editing={editing} />
     </DndContext>

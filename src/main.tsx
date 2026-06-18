@@ -9,6 +9,10 @@ import "@fontsource/oswald/latin-500.css";
 import "@fontsource/oswald/latin-600.css";
 import "@fontsource/oswald/latin-700.css";
 import "./styles.css";
+import { applyTheme, getStoredTheme } from "./lib/theme";
+
+// Apply the saved theme before first paint to avoid a flash.
+applyTheme(getStoredTheme());
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

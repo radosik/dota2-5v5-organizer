@@ -7,21 +7,34 @@ import { useRoster } from "../store/roster";
 import { t } from "../strings";
 import type { Player } from "../types";
 import { Avatar } from "./Avatar";
-import { DiscordIcon, EditIcon, ExternalIcon, RefreshIcon, Spinner, TrashIcon } from "./Icons";
+import {
+  CheckIcon,
+  DiscordIcon,
+  EditIcon,
+  ExternalIcon,
+  RefreshIcon,
+  Spinner,
+  TrashIcon,
+  XIcon,
+} from "./Icons";
 import { RankMedal } from "./RankMedal";
 
 type Props = {
   player: Player;
   onEdit: (player: Player) => void;
+  /** "active": draggable card in the Active list. "manage": row in the All-players popup. */
+  mode?: "active" | "manage";
 };
 
 const noDrag = { onPointerDown: (e: React.PointerEvent) => e.stopPropagation() };
 
-export function PlayerCard({ player, onEdit }: Props) {
-  const { setMmr, remove, refresh } = useRoster();
+export function PlayerCard({ player, onEdit, mode = "active" }: Props) {
+  const { setMmr, remove, refresh, setActive } = useRoster();
+  const draggable = mode === "active";
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `player-${player.id}`,
     data: { playerId: player.id },
+    disabled: !draggable,
   });
 
   const [editingMmr, setEditingMmr] = useState(false);
@@ -56,12 +69,14 @@ export function PlayerCard({ player, onEdit }: Props) {
 
   return (
     <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      ref={draggable ? setNodeRef : undefined}
+      {...(draggable ? listeners : {})}
+      {...(draggable ? attributes : {})}
       className={cn(
-        "group relative flex cursor-grab items-center gap-3 overflow-hidden rounded-xl border border-line bg-surface-2 py-2.5 pl-4 pr-2.5 transition-all duration-150 hover:-translate-y-px hover:border-line-2 hover:bg-surface-3 active:cursor-grabbing",
+        "group relative flex items-center gap-3 overflow-hidden rounded-xl border border-line bg-surface-2 py-2.5 pl-4 pr-2.5 transition-all duration-150 hover:-translate-y-px hover:border-line-2 hover:bg-surface-3",
+        draggable && "cursor-grab active:cursor-grabbing",
         isDragging && "opacity-40",
+        mode === "manage" && !player.isActive && "opacity-60",
       )}
     >
       {/* rank accent strip */}
@@ -69,6 +84,22 @@ export function PlayerCard({ player, onEdit }: Props) {
         className="absolute inset-y-0 left-0 w-[3px]"
         style={{ background: color, boxShadow: `0 0 12px ${color}66` }}
       />
+
+      {/* Online toggle (manage popup only) */}
+      {mode === "manage" && (
+        <button
+          onClick={() => setActive(player.id, !player.isActive)}
+          title={player.isActive ? t.card.markOffline : t.card.markOnline}
+          className={cn(
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border transition",
+            player.isActive
+              ? "border-radiant/60 bg-radiant/20 text-radiant"
+              : "border-line-2 bg-surface-3 text-transparent hover:border-line-2",
+          )}
+        >
+          <CheckIcon className="h-3.5 w-3.5" />
+        </button>
+      )}
 
       <Avatar name={player.steamName} avatarUrl={player.avatarUrl} rankTier={tier} size={42} />
 
@@ -178,14 +209,25 @@ export function PlayerCard({ player, onEdit }: Props) {
         >
           <EditIcon className="h-3.5 w-3.5" />
         </button>
-        <button
-          {...noDrag}
-          onClick={() => setConfirmDelete(true)}
-          className="rounded-md p-1.5 text-faint transition hover:bg-surface-4 hover:text-dire"
-          title={t.card.delete}
-        >
-          <TrashIcon className="h-3.5 w-3.5" />
-        </button>
+        {mode === "active" ? (
+          <button
+            {...noDrag}
+            onClick={() => setActive(player.id, false)}
+            className="rounded-md p-1.5 text-faint transition hover:bg-surface-4 hover:text-dire"
+            title={t.card.removeFromActive}
+          >
+            <XIcon className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <button
+            {...noDrag}
+            onClick={() => setConfirmDelete(true)}
+            className="rounded-md p-1.5 text-faint transition hover:bg-surface-4 hover:text-dire"
+            title={t.card.delete}
+          >
+            <TrashIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {confirmDelete && (

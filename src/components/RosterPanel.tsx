@@ -10,10 +10,11 @@ import { SearchIcon, Spinner, UsersIcon } from "./Icons";
 
 type Props = {
   onEdit: (player: Player) => void;
+  onOpenAllPlayers: () => void;
   placedIds: Set<number>;
 };
 
-export function RosterPanel({ onEdit, placedIds }: Props) {
+export function RosterPanel({ onEdit, onOpenAllPlayers, placedIds }: Props) {
   const { players, loading } = useRoster();
   const [filter, setFilter] = useState("");
   const { setNodeRef, isOver } = useDroppable({ id: "roster" });
@@ -21,10 +22,12 @@ export function RosterPanel({ onEdit, placedIds }: Props) {
   const available = useMemo(() => {
     const f = filter.trim().toLowerCase();
     return players
+      .filter((p) => p.isActive)
       .filter((p) => !placedIds.has(p.id))
       .filter((p) => !f || p.steamName.toLowerCase().includes(f));
   }, [players, placedIds, filter]);
 
+  const activeCount = useMemo(() => players.filter((p) => p.isActive).length, [players]);
   const onBoard = placedIds.size;
 
   return (
@@ -41,7 +44,7 @@ export function RosterPanel({ onEdit, placedIds }: Props) {
           {t.roster.title}
         </h2>
         <span className="num rounded-md bg-surface-3 px-1.5 py-0.5 text-xs text-muted">
-          {players.length}
+          {activeCount}
         </span>
         {onBoard > 0 && (
           <span className="ml-auto text-xs text-faint">{t.roster.onBoard(onBoard)}</span>
@@ -66,7 +69,11 @@ export function RosterPanel({ onEdit, placedIds }: Props) {
             <Spinner className="h-4 w-4 animate-spin" /> {t.roster.loading}
           </div>
         ) : available.length === 0 ? (
-          <EmptyState hasPlayers={players.length > 0} filtered={filter.trim().length > 0} />
+          <EmptyState
+            total={players.length}
+            activeCount={activeCount}
+            filtered={filter.trim().length > 0}
+          />
         ) : (
           <AnimatePresence initial={false}>
             {available.map((p) => (
@@ -84,16 +91,36 @@ export function RosterPanel({ onEdit, placedIds }: Props) {
           </AnimatePresence>
         )}
       </div>
+
+      <div className="border-t border-line p-3">
+        <button
+          onClick={onOpenAllPlayers}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-line-2 bg-surface-2 py-2.5 text-sm font-semibold text-text transition hover:border-gold/40 hover:bg-surface-3"
+        >
+          <UsersIcon className="h-4 w-4 text-gold" />
+          {t.roster.allPlayers}
+        </button>
+      </div>
     </div>
   );
 }
 
-function EmptyState({ hasPlayers, filtered }: { hasPlayers: boolean; filtered: boolean }) {
+function EmptyState({
+  total,
+  activeCount,
+  filtered,
+}: {
+  total: number;
+  activeCount: number;
+  filtered: boolean;
+}) {
   const message = filtered
     ? t.roster.emptyFiltered
-    : hasPlayers
-      ? t.roster.emptyAllPlaced
-      : t.roster.emptyNone;
+    : total === 0
+      ? t.roster.emptyNone
+      : activeCount === 0
+        ? t.roster.emptyNoActive
+        : t.roster.emptyAllPlaced;
 
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-5 py-14 text-center">

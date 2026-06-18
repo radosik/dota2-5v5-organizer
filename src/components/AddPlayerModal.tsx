@@ -188,6 +188,7 @@ export function AddPlayerModal({ open, onClose, editing }: Props) {
       discordId: form.discordId.trim() || null,
       notes: form.notes.trim() || null,
       roles: form.roles,
+      isActive: editing ? editing.isActive : true,
     };
 
     setSaving(true);

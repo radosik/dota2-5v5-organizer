@@ -21,6 +21,7 @@ export function playerToInput(p: Player): PlayerInput {
     discordId: p.discordId,
     notes: p.notes,
     roles: p.roles ?? [],
+    isActive: p.isActive ?? true,
   };
 }
 

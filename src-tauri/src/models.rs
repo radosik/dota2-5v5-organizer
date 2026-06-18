@@ -22,9 +22,16 @@ pub struct Player {
     /// Preferred positions 1..=5 (Carry, Mid, Offlane, Soft/Hard Support).
     #[serde(default)]
     pub roles: Vec<i64>,
+    /// Whether the player is currently "online" — shown in the Active list.
+    #[serde(default = "default_true")]
+    pub is_active: bool,
     pub last_fetched_at: Option<String>,
     pub created_at: String,
     pub updated_at: String,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// Payload from the frontend to create or update a player.
@@ -44,6 +51,8 @@ pub struct PlayerInput {
     pub notes: Option<String>,
     #[serde(default)]
     pub roles: Vec<i64>,
+    #[serde(default = "default_true")]
+    pub is_active: bool,
 }
 
 /// One candidate returned by OpenDota's `/search` endpoint.

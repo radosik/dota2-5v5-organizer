@@ -54,6 +54,7 @@ pub fn run() {
             commands::create_player,
             commands::update_player,
             commands::delete_player,
+            commands::set_player_active,
             commands::get_board,
             commands::save_board,
             commands::get_lobby,

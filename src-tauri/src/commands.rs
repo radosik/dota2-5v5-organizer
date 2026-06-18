@@ -55,6 +55,12 @@ pub fn delete_player(state: State<'_, AppState>, id: i64) -> AppResult<()> {
     db::delete_player(&conn, id)
 }
 
+#[tauri::command]
+pub fn set_player_active(state: State<'_, AppState>, id: i64, active: bool) -> AppResult<Player> {
+    let conn = lock(&state)?;
+    db::set_player_active(&conn, id, active)
+}
+
 // ----------------------------------------------------------------------------
 // Board
 // ----------------------------------------------------------------------------
