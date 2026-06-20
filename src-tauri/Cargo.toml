@@ -1,6 +1,6 @@
 [package]
 name = "dota5v5"
-version = "2.0.0"
+version = "2.0.1"
 description = "Dota 2 5v5 Custom Lobby Organizer"
 authors = ["rados1k"]
 edition = "2021"
