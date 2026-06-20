@@ -2,11 +2,38 @@ import { useMemo, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "../lib/util";
+import { useBoard } from "../store/board";
 import { useRoster } from "../store/roster";
 import { t } from "../strings";
 import type { Player } from "../types";
 import { PlayerCard } from "./PlayerCard";
-import { SearchIcon, Spinner, UsersIcon } from "./Icons";
+import { CoinIcon, SearchIcon, Spinner, UsersIcon } from "./Icons";
+
+/** Pick two captains from `actives` whose MMR differ by ≤ maxGap (else the closest pair). */
+function chooseCaptains(actives: Player[], maxGap = 1000): [Player, Player] | null {
+  if (actives.length < 2) return null;
+  const within: [Player, Player][] = [];
+  for (let i = 0; i < actives.length; i++) {
+    for (let j = i + 1; j < actives.length; j++) {
+      if (Math.abs(actives[i].mmr - actives[j].mmr) <= maxGap) {
+        within.push([actives[i], actives[j]]);
+      }
+    }
+  }
+  if (within.length > 0) return within[Math.floor(Math.random() * within.length)];
+  // Fallback: no pair within the gap — take the two closest by MMR.
+  const sorted = [...actives].sort((a, b) => a.mmr - b.mmr);
+  let best = 0;
+  let bestDiff = Infinity;
+  for (let i = 0; i + 1 < sorted.length; i++) {
+    const d = sorted[i + 1].mmr - sorted[i].mmr;
+    if (d < bestDiff) {
+      bestDiff = d;
+      best = i;
+    }
+  }
+  return [sorted[best], sorted[best + 1]];
+}
 
 type Props = {
   onEdit: (player: Player) => void;
@@ -27,8 +54,18 @@ export function RosterPanel({ onEdit, onOpenAllPlayers, placedIds }: Props) {
       .filter((p) => !f || p.steamName.toLowerCase().includes(f));
   }, [players, placedIds, filter]);
 
-  const activeCount = useMemo(() => players.filter((p) => p.isActive).length, [players]);
-  const onBoard = placedIds.size;
+  const place = useBoard((s) => s.place);
+  const activePlayers = useMemo(() => players.filter((p) => p.isActive), [players]);
+  const activeCount = activePlayers.length;
+
+  function pickCaptains() {
+    const pair = chooseCaptains(activePlayers);
+    if (!pair) return;
+    // Randomise which captain leads Radiant vs Dire; place each as the first slot.
+    const [radiant, dire] = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+    place(radiant.id, "A", 0);
+    place(dire.id, "B", 0);
+  }
 
   return (
     <div
@@ -38,17 +75,23 @@ export function RosterPanel({ onEdit, onOpenAllPlayers, placedIds }: Props) {
         isOver && "border-radiant/50",
       )}
     >
-      <div className="flex items-center gap-2.5 border-b border-line px-4 py-3.5">
-        <UsersIcon className="h-4 w-4 text-gold" />
-        <h2 className="font-display text-base font-semibold uppercase tracking-wide text-text">
+      <div className="flex items-center gap-2 border-b border-line px-4 py-3">
+        <UsersIcon className="h-4 w-4 shrink-0 text-gold" />
+        <h2 className="truncate font-display text-base font-semibold uppercase tracking-wide text-text">
           {t.roster.title}
         </h2>
-        <span className="num rounded-md bg-surface-3 px-1.5 py-0.5 text-xs text-muted">
+        <span className="num shrink-0 rounded-md bg-surface-3 px-1.5 py-0.5 text-xs text-muted">
           {activeCount}
         </span>
-        {onBoard > 0 && (
-          <span className="ml-auto text-xs text-faint">{t.roster.onBoard(onBoard)}</span>
-        )}
+        <button
+          onClick={pickCaptains}
+          disabled={activeCount < 2}
+          title={t.roster.randomCaptains}
+          className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-xs font-semibold text-text transition hover:border-gold/40 hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <CoinIcon className="h-3.5 w-3.5 text-gold" />
+          {t.roster.captains}
+        </button>
       </div>
 
       <div className="px-3 py-2.5">

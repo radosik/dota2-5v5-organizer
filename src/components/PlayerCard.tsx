@@ -31,8 +31,10 @@ const noDrag = { onPointerDown: (e: React.PointerEvent) => e.stopPropagation() }
 export function PlayerCard({ player, onEdit, mode = "active" }: Props) {
   const { setMmr, remove, refresh, setActive } = useRoster();
   const draggable = mode === "active";
+  // Unique id per mode: a disabled card in the All-players popup must NOT share an
+  // id with the active-list card, or unmounting the popup de-registers the active one.
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `player-${player.id}`,
+    id: `${mode}-player-${player.id}`,
     data: { playerId: player.id },
     disabled: !draggable,
   });
